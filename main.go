@@ -10,6 +10,7 @@ import (
 
 	fiber "github.com/gofiber/fiber/v2"
 	"github.com/snehalyelmati/telegram-bot-golang/models"
+	DialogFlow "github.com/snehalyelmati/telegram-bot-golang/services"
 )
 
 func main() {
@@ -17,6 +18,8 @@ func main() {
 
 	TOKEN := os.Getenv("TOKEN")
 	SERVER_URL := os.Getenv("SERVER_URL")
+	PROJECT_ID := os.Getenv("PROJECT_ID")
+	LANGUAGE := os.Getenv("LANGUAGE")
 
 	TELEGRAM_API := "https://api.telegram.org/bot" + TOKEN
 	URI := "/webhook" + TOKEN
@@ -42,9 +45,24 @@ func main() {
 		json.Unmarshal(c.Body(), reqBody)
 		l.Printf("%v", reqBody)
 
+		// mimic the request
+		// data, err := json.Marshal(map[string]string{
+		// 	"chat_id": strconv.Itoa(reqBody.Message.Chat.ID),
+		// 	"text":    reqBody.Message.Text,
+		// })
+
+		// get response from dialogflow
+		sessionID := strconv.Itoa(reqBody.Message.Chat.ID)
+		response, err := DialogFlow.DetectIntentText(PROJECT_ID, sessionID, reqBody.Message.Text, LANGUAGE)
+		if err != nil {
+			l.Println(err)
+		}
+		l.Println("After dialogflow request")
+
+		// prepare a response for telegram
 		data, err := json.Marshal(map[string]string{
 			"chat_id": strconv.Itoa(reqBody.Message.Chat.ID),
-			"text":    reqBody.Message.Text,
+			"text":    response,
 		})
 		if err != nil {
 			l.Println(err)
