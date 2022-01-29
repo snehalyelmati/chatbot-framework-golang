@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 
 	fiber "github.com/gofiber/fiber/v2"
 	"github.com/snehalyelmati/telegram-bot-golang/models"
@@ -45,6 +46,11 @@ func main() {
 		json.Unmarshal(c.Body(), reqBody)
 		l.Printf("%v", reqBody)
 
+		inputMessage := reqBody.Message.Text
+		if inputMessage == "/start" {
+			inputMessage = "hi"
+		}
+
 		// mimic the request
 		// data, err := json.Marshal(map[string]string{
 		// 	"chat_id": strconv.Itoa(reqBody.Message.Chat.ID),
@@ -53,24 +59,28 @@ func main() {
 
 		// get response from dialogflow
 		sessionID := strconv.Itoa(reqBody.Message.Chat.ID)
-		response, err := DialogFlow.DetectIntentText(PROJECT_ID, sessionID, reqBody.Message.Text, LANGUAGE)
+		response, queryResult, err := DialogFlow.DetectIntentText(PROJECT_ID, sessionID, inputMessage, LANGUAGE)
 		if err != nil {
 			l.Println(err)
 		}
-		l.Println("After dialogflow request")
+		l.Println("Query result:", queryResult)
 
-		// prepare a response for telegram
-		data, err := json.Marshal(map[string]string{
-			"chat_id": strconv.Itoa(reqBody.Message.Chat.ID),
-			"text":    response,
-		})
-		if err != nil {
-			l.Println(err)
-		}
+		statements := strings.Split(response, "\n")
 
-		_, err = http.Post(TELEGRAM_API+"/sendMessage", "application/json", bytes.NewBuffer(data))
-		if err != nil {
-			l.Println(err)
+		for _, statement := range statements {
+			// prepare a response for telegram
+			data, err := json.Marshal(map[string]string{
+				"chat_id": strconv.Itoa(reqBody.Message.Chat.ID),
+				"text":    statement,
+			})
+			if err != nil {
+				l.Println(err)
+			}
+
+			_, err = http.Post(TELEGRAM_API+"/sendMessage", "application/json", bytes.NewBuffer(data))
+			if err != nil {
+				l.Println(err)
+			}
 		}
 
 		return c.SendStatus(fiber.StatusOK)
