@@ -1,6 +1,6 @@
 package models
 
-type MessageReq struct {
+type TelgramMessageReq struct {
 	UpdateID int `json:"update_id"`
 	Message  struct {
 		MessageID int `json:"message_id"`
