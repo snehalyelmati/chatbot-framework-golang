@@ -1,4 +1,4 @@
-package domain
+package telegramhdl
 
 type TelegramRes struct {
 	ChatID      string              `json:"chat_id"`

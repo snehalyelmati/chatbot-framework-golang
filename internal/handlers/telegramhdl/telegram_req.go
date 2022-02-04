@@ -1,4 +1,4 @@
-package domain
+package telegramhdl
 
 type TelegramReq struct {
 	UpdateID int     `json:"update_id"`
@@ -26,4 +26,6 @@ type Chat struct {
 	Type      string `json:"type"`
 }
 
-// func NewTelegramReq() {}
+func NewTelegramReq() *TelegramReq {
+	return new(TelegramReq)
+}
