@@ -1,15 +1,26 @@
-package services
+package dialgoflowsrv
 
 import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 
 	dialogflow "cloud.google.com/go/dialogflow/apiv2"
 	dialogflowpb "google.golang.org/genproto/googleapis/cloud/dialogflow/v2"
 )
 
-func DetectIntentText(projectID, sessionID, text, languageCode string) (string, string, error) {
+type service struct {
+	l *log.Logger
+}
+
+func New(l *log.Logger) *service {
+	return &service{
+		l: l,
+	}
+}
+
+func (srv *service) DetectIntentText(projectID, sessionID, text, languageCode string) (string, string, error) {
 	ctx := context.Background()
 	sessionClient, err := dialogflow.NewSessionsClient(ctx)
 	if err != nil {
@@ -34,6 +45,7 @@ func DetectIntentText(projectID, sessionID, text, languageCode string) (string, 
 
 	queryResult := response.GetQueryResult()
 	fulfillmentText := queryResult.GetFulfillmentText()
+	srv.l.Println("Fulfillment text from dialogflow:", fulfillmentText)
 
 	return fulfillmentText, queryResult.String(), nil
 }
