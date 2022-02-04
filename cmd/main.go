@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"net/http"
 	"os"
 
 	fiber "github.com/gofiber/fiber/v2"
@@ -14,16 +15,25 @@ func main() {
 	logger := log.New(os.Stdout, "go-api:", log.LstdFlags)
 	PROJECT_ID := os.Getenv("PROJECT_ID")
 	LANGUAGE := os.Getenv("LANGUAGE")
+	TOKEN := os.Getenv("TOKEN")
+	SERVER_URL := os.Getenv("SERVER_URL")
+	TELEGRAM_API := "https://api.telegram.org/bot" + TOKEN
+	URI := "/webhook" + TOKEN
+	WEBHOOK_URL := SERVER_URL + URI
 
 	dialogflowService := dialgoflowsrv.New(logger)
 	telegramService := telegramsrv.New(logger, dialogflowService)
-	telegramHandler := telegramhdl.NewHTTPHandler(logger, telegramService, PROJECT_ID, LANGUAGE)
+	telegramHandler := telegramhdl.NewHTTPHandler(logger, telegramService, PROJECT_ID, LANGUAGE, TELEGRAM_API)
+
+	res, err := http.Get(TELEGRAM_API + "/setWebhook?url=" + WEBHOOK_URL)
+	if err != nil {
+		logger.Println(err)
+	}
+	logger.Println("Response from the initial webhook:", res)
 
 	app := fiber.New()
 	app.Get("/healthcheck", telegramHandler.HealthCheck)
 
-	TOKEN := os.Getenv("TOKEN")
-	URI := "/webhook" + TOKEN
 	app.Post(URI, telegramHandler.SendMessage)
 
 	app.Listen(":3000")

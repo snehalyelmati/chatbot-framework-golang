@@ -1,9 +1,7 @@
 package ports
 
-import ()
-
 type TelegramService interface {
-	SendMessage(utterance string, chatID int, projectID, language string)
+	SendMessage(utterance string, chatID int, projectID, language, telegramAPI string) error
 	HealthCheck() string
 }
 
