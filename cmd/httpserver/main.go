@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 
 	fiber "github.com/gofiber/fiber/v2"
 	dialgoflowsrv "github.com/snehalyelmati/telegram-bot-golang/internal/core/services/dialogflowsrv"
@@ -36,6 +37,10 @@ func main() {
 
 	app.Post(URI, telegramHandler.SendMessage)
 
-	app.Listen(":3000")
-	logger.Println("Server running on port 3000")
+	PORT := 3000
+	err = app.Listen(":" + strconv.Itoa(PORT))
+	if err != nil {
+		logger.Fatal("Cannot run server on port:", PORT)
+	}
+	logger.Println("Server running on port:", PORT)
 }
