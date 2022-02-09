@@ -3,6 +3,7 @@ package transcriptsrepo
 import (
 	"context"
 	"log"
+	"strconv"
 
 	firebase "firebase.google.com/go"
 	"github.com/snehalyelmati/telegram-bot-golang/internal/core/domain"
@@ -35,5 +36,23 @@ func (fr *FirestoreRepo) Save(transcript domain.Transcript) error {
 
 	fr.l.Println("Saved transcript successfully")
 	fr.l.Println(transcript)
+	return nil
+}
+
+func (fr *FirestoreRepo) SaveUser(user domain.From) error {
+	ctx := context.Background()
+	firestore, err := fr.firebaseApp.Firestore(ctx)
+	if err != nil {
+		fr.l.Println("Couldn't initialize firestore instance to save user")
+		return err
+	}
+
+	if _, err := firestore.Collection("users").Doc(strconv.Itoa(user.ID)).Set(ctx, user); err != nil {
+		fr.l.Println("Couldn't save transcript")
+		return err
+	}
+
+	fr.l.Println("Saved user successfully")
+	fr.l.Println(user)
 	return nil
 }

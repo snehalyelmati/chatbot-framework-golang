@@ -32,12 +32,6 @@ func (srv *service) HealthCheck() string {
 }
 
 func (srv *service) SendMessage(utterance string, chatID int, projectID, language, telegramAPI string) (string, error) {
-	// initialize stuff
-	if utterance == "/start" {
-		// TODO: save the user data
-		utterance = "hi"
-	}
-
 	// get the fulfillment text from the dialogflow service
 	dialogflowResponse, queryResult, err := srv.dialogflowService.DetectIntentText(projectID, strconv.Itoa(chatID), utterance, language)
 	if err != nil {

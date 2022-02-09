@@ -6,4 +6,5 @@ import (
 
 type TranscriptsRepository interface {
 	Save(domain.Transcript) error
+	SaveUser(domain.From) error
 }

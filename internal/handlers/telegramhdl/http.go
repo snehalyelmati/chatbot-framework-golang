@@ -45,6 +45,16 @@ func (hdl *HTTPHandler) SendMessage(c *fiber.Ctx) error {
 	messageID := req.Message.MessageID
 	firstName := req.Message.Chat.FirstName
 
+	// initialize stuff
+	if utterance == "/start" {
+		// save the user data
+		utterance = "hi"
+		err := hdl.transcriptsRepository.SaveUser(req.Message.From)
+		if err != nil {
+			return err
+		}
+	}
+
 	dialogflowResponse, err := hdl.telegramService.SendMessage(utterance, chatID, hdl.ProjectID, hdl.Language, hdl.TelegramAPI)
 	if err != nil {
 		return err
