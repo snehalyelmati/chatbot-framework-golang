@@ -9,8 +9,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/snehalyelmati/telegram-bot-golang/internal/core/domain"
 	"github.com/snehalyelmati/telegram-bot-golang/internal/core/ports"
-	telegramhdl "github.com/snehalyelmati/telegram-bot-golang/internal/handlers/telegramhdl"
 )
 
 type service struct {
@@ -31,7 +31,7 @@ func (srv *service) HealthCheck() string {
 	return res
 }
 
-func (srv *service) SendMessage(utterance string, chatID int, projectID, language, telegramAPI string) error {
+func (srv *service) SendMessage(utterance string, chatID int, projectID, language, telegramAPI string) (string, error) {
 	// initialize stuff
 	if utterance == "/start" {
 		// TODO: save the user data
@@ -42,30 +42,21 @@ func (srv *service) SendMessage(utterance string, chatID int, projectID, languag
 	dialogflowResponse, queryResult, err := srv.dialogflowService.DetectIntentText(projectID, strconv.Itoa(chatID), utterance, language)
 	if err != nil {
 		srv.l.Println(err)
-		return err
+		return "", err
 	}
 	srv.l.Println("Query result:", queryResult)
 
 	// prepare the response from all the parameters available and post it to the telegram API
 	srv.sendResponsesToTelegram(dialogflowResponse, strconv.Itoa(chatID), telegramAPI)
 
-	return nil
+	return dialogflowResponse, nil
 }
 
 func (srv *service) sendResponsesToTelegram(dialogflowResponse, chatID, telegramAPI string) {
 	statements := strings.Split(dialogflowResponse, "\n")
 
 	for _, statement := range statements {
-		// prepare a response for telegram
-		data, err := json.Marshal(map[string]string{
-			"chat_id": chatID,
-			"text":    statement,
-		})
-		if err != nil {
-			srv.l.Println(err)
-		}
-
-		response := telegramhdl.NewTelegramRes(chatID, "", true, true)
+		response := domain.NewTelegramRes(chatID, "", true, true)
 		// response.ReplyMarkup.Keyboard = make([][]telegramhdl.TelegramKeyboard, 0)
 
 		// get all the Quick Replies from the text
@@ -79,8 +70,8 @@ func (srv *service) sendResponsesToTelegram(dialogflowResponse, chatID, telegram
 		for _, qr := range quickReplies {
 			if qr["qrType"] == "OPT" {
 				// append to response.ReplyMarkup.Keyboard
-				response.ReplyMarkup.Keyboard = append(response.ReplyMarkup.Keyboard, []telegramhdl.TelegramKeyboard{{Text: qr["label"]}})
-			} else if qr["qrType"] == "SUGT" {
+				response.ReplyMarkup.Keyboard = append(response.ReplyMarkup.Keyboard, []domain.TelegramKeyboard{{Text: qr["label"]}})
+			} else if qr["qrType"] == "SUGT" { // nolint
 				// TODO: add buttons for suggestions
 			}
 		}
@@ -92,7 +83,7 @@ func (srv *service) sendResponsesToTelegram(dialogflowResponse, chatID, telegram
 		}
 
 		// prepare a json object from the response object
-		data, err = json.Marshal(response)
+		data, err := json.Marshal(response)
 		if err != nil {
 			srv.l.Println(err)
 		}

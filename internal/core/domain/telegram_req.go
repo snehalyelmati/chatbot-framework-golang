@@ -1,4 +1,4 @@
-package telegramhdl
+package domain
 
 type TelegramReq struct {
 	UpdateID int     `json:"update_id"`

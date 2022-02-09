@@ -2,9 +2,9 @@ package dialgoflowsrv
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
+	"strings"
 
 	dialogflow "cloud.google.com/go/dialogflow/apiv2"
 	dialogflowpb "google.golang.org/genproto/googleapis/cloud/dialogflow/v2"
@@ -29,7 +29,7 @@ func (srv *service) DetectIntentText(projectID, sessionID, text, languageCode st
 	defer sessionClient.Close()
 
 	if projectID == "" || sessionID == "" {
-		return "", "", errors.New(fmt.Sprintf("Received empty project (%s) or session (%s)", projectID, sessionID))
+		return "", "", fmt.Errorf("Received empty project (%s) or session (%s)", projectID, sessionID)
 	}
 
 	sessionPath := fmt.Sprintf("projects/%s/agent/sessions/%s", projectID, sessionID)
@@ -45,7 +45,7 @@ func (srv *service) DetectIntentText(projectID, sessionID, text, languageCode st
 
 	queryResult := response.GetQueryResult()
 	fulfillmentText := queryResult.GetFulfillmentText()
-	srv.l.Println("Fulfillment text from dialogflow:", fulfillmentText)
+	srv.l.Println("Fulfillment text from dialogflow:", strings.ReplaceAll(fulfillmentText, "\r\n", ""))
 
 	return fulfillmentText, queryResult.String(), nil
 }

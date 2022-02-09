@@ -1,15 +1,18 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
 	"strconv"
 
+	firebase "firebase.google.com/go"
 	fiber "github.com/gofiber/fiber/v2"
 	dialgoflowsrv "github.com/snehalyelmati/telegram-bot-golang/internal/core/services/dialogflowsrv"
 	"github.com/snehalyelmati/telegram-bot-golang/internal/core/services/telegramsrv"
 	"github.com/snehalyelmati/telegram-bot-golang/internal/handlers/telegramhdl"
+	"github.com/snehalyelmati/telegram-bot-golang/internal/respositories/transcriptsrepo"
 )
 
 func main() {
@@ -22,9 +25,18 @@ func main() {
 	URI := "/webhook" + TOKEN
 	WEBHOOK_URL := SERVER_URL + URI
 
+	// initialize firebase
+	ctx := context.Background()
+	conf := &firebase.Config{ProjectID: PROJECT_ID}
+	firebaseApp, err := firebase.NewApp(ctx, conf)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	transcriptsFirestore := transcriptsrepo.NewFirestoreRepo(firebaseApp, logger)
 	dialogflowService := dialgoflowsrv.New(logger)
 	telegramService := telegramsrv.New(logger, dialogflowService)
-	telegramHandler := telegramhdl.NewHTTPHandler(logger, telegramService, PROJECT_ID, LANGUAGE, TELEGRAM_API)
+	telegramHandler := telegramhdl.NewHTTPHandler(logger, telegramService, transcriptsFirestore, PROJECT_ID, LANGUAGE, TELEGRAM_API)
 
 	res, err := http.Get(TELEGRAM_API + "/setWebhook?url=" + WEBHOOK_URL)
 	if err != nil {
